@@ -18,7 +18,7 @@
 
     WaveComponent.prototype.update = function() {
       var friction, k_b, k_u;
-      k_u = 0.1;
+      k_u = 1.0;
       k_b = 0.1;
       friction = 0.1;
       this.a = -this.y * k_u - this.v * friction;
@@ -39,7 +39,7 @@
   Wave = (function() {
     function Wave(canvas, ctx) {
       var i, j, next, prev, ref, wave_len;
-      wave_len = 15;
+      wave_len = 5;
       this.array = (function() {
         var j, ref, results;
         results = [];
@@ -78,7 +78,7 @@
       this.ctx.lineWidth = 2;
       this.ctx.strokeStyle = "#FF0000";
       this.ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-      defalult_y = this.canvas.height * 0.3;
+      defalult_y = this.canvas.height * 0.4;
       this.ctx.beginPath();
       for (i = j = 0, ref = this.array.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
         x = this.canvas.width / (this.array.length - 1) * i;
@@ -95,7 +95,20 @@
       return this.ctx.fill();
     };
 
+    Wave.prototype.giveAccel = function(accel) {
+      var a;
+      a = 3;
+      if (accel.x > 0) {
+        return this.givePulse(0, a * accel.x);
+      } else {
+        return this.givePulse(-1, a * -accel.x);
+      }
+    };
+
     Wave.prototype.givePulse = function(i, v) {
+      while (i < 0) {
+        i += this.array.length;
+      }
       return this.array[i].v = v;
     };
 
@@ -126,11 +139,8 @@
     };
 
     Main.prototype.update = function() {
+      this.wave.giveAccel(this.accel);
       this.wave.update();
-      if (this.counter === 0) {
-        console.log('pulse');
-        this.wave.givePulse(Math.floor(this.wave.array.length / 2), 10);
-      }
       return this.counter += 1;
     };
 

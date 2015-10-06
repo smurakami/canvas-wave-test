@@ -9,7 +9,7 @@ class WaveComponent
     @prev = prev
     @next = next
   update: ->
-    k_u = 0.1
+    k_u = 1.0
     k_b = 0.1
     friction = 0.1
     @a = - @y * k_u - @v * friction
@@ -22,7 +22,7 @@ class WaveComponent
 
 class Wave
   constructor: (canvas, ctx) ->
-    wave_len = 15
+    wave_len = 5
     @array = (new WaveComponent for i in [0...wave_len])
     for i in [0...@array.length]
       prev = next = null
@@ -42,7 +42,7 @@ class Wave
     @ctx.lineWidth = 2
     @ctx.strokeStyle = "#FF0000"
     @ctx.fillStyle = "rgba(255, 0, 0, 0.5)"
-    defalult_y = @canvas.height * 0.3
+    defalult_y = @canvas.height * 0.4
     @ctx.beginPath()
     for i in [0...@array.length]
       x = @canvas.width / (@array.length - 1) * i
@@ -56,7 +56,16 @@ class Wave
     @ctx.closePath()
     @ctx.fill()
 
+  giveAccel: (accel) ->
+    a = 3
+    if accel.x > 0
+      @givePulse( 0, a *  accel.x)
+    else
+      @givePulse(-1, a * -accel.x)
+
   givePulse: (i, v) ->
+    while i < 0
+      i += @array.length
     @array[i].v = v
 
 
@@ -75,10 +84,8 @@ class Main
     @ctx = ctx
 
   update: ->
+    @wave.giveAccel(@accel)
     @wave.update()
-    if @counter == 0
-      console.log('pulse')
-      @wave.givePulse(Math.floor(@wave.array.length/2), 10)
     @counter += 1
   draw: ->
     @ctx.clearRect(0, 0, @canvas.width, @canvas.height)
