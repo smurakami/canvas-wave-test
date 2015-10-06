@@ -22,7 +22,7 @@ class WaveComponent
 
 class Wave
   constructor: (canvas, ctx) ->
-    wave_len = 5
+    wave_len = 7
     @array = (new WaveComponent for i in [0...wave_len])
     @connectWaveComponents()
     @gravity = {x: 12, y: 30}
@@ -47,20 +47,22 @@ class Wave
     @ctx.strokeStyle = "#FF0000"
     @ctx.fillStyle = "rgba(255, 0, 0, 0.5)"
     defalult_y = @canvas.height * 0.4
+    size = Math.sqrt(Math.pow(@canvas.width, 2) + Math.pow(@canvas.height, 2))
+    margin = (size - @canvas.width)/2
     @ctx.beginPath()
     @ctx.save()
     @ctx.translate(@canvas.width/2, @canvas.height/2)
     @ctx.rotate(Math.atan2(-@gravity.x, -@gravity.y))
     @ctx.translate(-@canvas.width/2, -@canvas.height/2)
     for i in [0...@array.length]
-      x = @canvas.width / (@array.length - 1) * i
+      x = size / (@array.length - 1) * i - margin
       y = @array[i].y + defalult_y
       if x == 0
         @ctx.moveTo(x, y)
       else
         @ctx.lineTo(x, y)
-    @ctx.lineTo(@canvas.width, @canvas.height)
-    @ctx.lineTo(0, @canvas.height)
+    @ctx.lineTo(@canvas.width + margin, @canvas.height + margin)
+    @ctx.lineTo(-margin, @canvas.height + margin)
     @ctx.closePath()
     @ctx.fill()
     @ctx.restore()
@@ -87,12 +89,8 @@ class Main
     @counter = 0
   initCanvas: ->
     c = document.getElementById("main_canvas");
-    size = Math.sqrt(Math.pow($(window).width(), 2) + Math.pow($(window).height(), 2))
-    console.log size
-    # c.width = size
-    # c.height = size
-    # $('#main_canvas').css('left', - (c.width  - $(window).width())/2)
-    # $('#main_canvas').css('top',  - (c.height - $(window).height())/2)
+    c.width = $(window).width()
+    c.height = $(window).height()
     ctx = c.getContext("2d");
     @canvas = c
     @ctx = ctx

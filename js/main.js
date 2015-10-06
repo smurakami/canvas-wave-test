@@ -39,7 +39,7 @@
   Wave = (function() {
     function Wave(canvas, ctx) {
       var i, wave_len;
-      wave_len = 5;
+      wave_len = 7;
       this.array = (function() {
         var j, ref, results;
         results = [];
@@ -85,18 +85,20 @@
     };
 
     Wave.prototype.draw = function() {
-      var defalult_y, i, j, ref, x, y;
+      var defalult_y, i, j, margin, ref, size, x, y;
       this.ctx.lineWidth = 2;
       this.ctx.strokeStyle = "#FF0000";
       this.ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
       defalult_y = this.canvas.height * 0.4;
+      size = Math.sqrt(Math.pow(this.canvas.width, 2) + Math.pow(this.canvas.height, 2));
+      margin = (size - this.canvas.width) / 2;
       this.ctx.beginPath();
       this.ctx.save();
       this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
       this.ctx.rotate(Math.atan2(-this.gravity.x, -this.gravity.y));
       this.ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2);
       for (i = j = 0, ref = this.array.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-        x = this.canvas.width / (this.array.length - 1) * i;
+        x = size / (this.array.length - 1) * i - margin;
         y = this.array[i].y + defalult_y;
         if (x === 0) {
           this.ctx.moveTo(x, y);
@@ -104,8 +106,8 @@
           this.ctx.lineTo(x, y);
         }
       }
-      this.ctx.lineTo(this.canvas.width, this.canvas.height);
-      this.ctx.lineTo(0, this.canvas.height);
+      this.ctx.lineTo(this.canvas.width + margin, this.canvas.height + margin);
+      this.ctx.lineTo(-margin, this.canvas.height + margin);
       this.ctx.closePath();
       this.ctx.fill();
       return this.ctx.restore();
@@ -150,10 +152,10 @@
     }
 
     Main.prototype.initCanvas = function() {
-      var c, ctx, size;
+      var c, ctx;
       c = document.getElementById("main_canvas");
-      size = Math.sqrt(Math.pow($(window).width(), 2) + Math.pow($(window).height(), 2));
-      console.log(size);
+      c.width = $(window).width();
+      c.height = $(window).height();
       ctx = c.getContext("2d");
       this.canvas = c;
       return this.ctx = ctx;
