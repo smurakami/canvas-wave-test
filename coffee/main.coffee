@@ -24,6 +24,12 @@ class Wave
   constructor: (canvas, ctx) ->
     wave_len = 5
     @array = (new WaveComponent for i in [0...wave_len])
+    @connectWaveComponents()
+    @gravity = {x: 12, y: 30}
+    @canvas = canvas
+    @ctx = ctx
+
+  connectWaveComponents: ->
     for i in [0...@array.length]
       prev = next = null
       if i != 0
@@ -31,8 +37,6 @@ class Wave
       if i != @array.length - 1
         next = @array[i + 1]
       @array[i].connect(prev, next)
-    @canvas = canvas
-    @ctx = ctx
 
   update: ->
     for c in @array
@@ -44,6 +48,10 @@ class Wave
     @ctx.fillStyle = "rgba(255, 0, 0, 0.5)"
     defalult_y = @canvas.height * 0.4
     @ctx.beginPath()
+    @ctx.save()
+    @ctx.translate(@canvas.width/2, @canvas.height/2)
+    @ctx.rotate(Math.atan2(-@gravity.x, -@gravity.y))
+    @ctx.translate(-@canvas.width/2, -@canvas.height/2)
     for i in [0...@array.length]
       x = @canvas.width / (@array.length - 1) * i
       y = @array[i].y + defalult_y
@@ -55,6 +63,7 @@ class Wave
     @ctx.lineTo(0, @canvas.height)
     @ctx.closePath()
     @ctx.fill()
+    @ctx.restore()
 
   giveAccel: (accel) ->
     a = 3
@@ -72,25 +81,39 @@ class Wave
 class Main
   constructor: ->
     @initCanvas()
-    @accel = {x: 0, y: 0, z: 0}
+    @accel   = {x: 0, y: 0, z: 0}
+    @gravity = {x: 0, y: -10, z: 0}
     @wave = new Wave(@canvas, @ctx)
     @counter = 0
   initCanvas: ->
     c = document.getElementById("main_canvas");
-    c.width = $(window).width()
-    c.height = $(window).height()
+    size = Math.sqrt(Math.pow($(window).width(), 2) + Math.pow($(window).height(), 2))
+    console.log size
+    # c.width = size
+    # c.height = size
+    # $('#main_canvas').css('left', - (c.width  - $(window).width())/2)
+    # $('#main_canvas').css('top',  - (c.height - $(window).height())/2)
     ctx = c.getContext("2d");
     @canvas = c
     @ctx = ctx
 
   update: ->
+    @wave.gravity = @gravity
     @wave.giveAccel(@accel)
     @wave.update()
     @counter += 1
   draw: ->
     @ctx.clearRect(0, 0, @canvas.width, @canvas.height)
     @wave.draw()
-    # @drawAccel()
+
+  devicemotionHandler: (event) ->
+    @accel.x = event.acceleration.x
+    @accel.y = event.acceleration.y
+    @accel.z = event.acceleration.z
+    @gravity.x = event.accelerationIncludingGravity.x - @accel.x
+    @gravity.y = event.accelerationIncludingGravity.y - @accel.y
+    @gravity.z = event.accelerationIncludingGravity.z - @accel.z
+    @gravity.y -= Math.abs(@gravity.z)
 
   drawAccel: ->
     ctx = @ctx
@@ -116,12 +139,10 @@ class Main
       8, 0, 2 * Math.PI, false)
     ctx.fill()
 
-  devicemotionHandler: (event) ->
-    @accel.x = event.acceleration.x
-    @accel.y = event.acceleration.y
-    @accel.z = event.acceleration.z
 
-TIMER = null
+window.myevent = null
+
+__TIMER = null
 
 $ ->
   app = new Main
@@ -129,7 +150,8 @@ $ ->
   window.addEventListener "devicemotion", (event) ->
     app.devicemotionHandler(event)
 
-  TIMER = setInterval ->
+
+  __TIMER = setInterval ->
     app.update()
     app.draw()
   , 33
