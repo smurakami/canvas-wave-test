@@ -7,13 +7,27 @@
       this.y = 0;
       this.a = 0;
       this.v = 0;
+      this.next = null;
+      this.prev = null;
     }
 
+    WaveComponent.prototype.connect = function(prev, next) {
+      this.prev = prev;
+      return this.next = next;
+    };
+
     WaveComponent.prototype.update = function() {
-      var friction, k;
-      k = 1;
-      friction = 0.3;
-      this.a = -k * this.y - this.v * friction;
+      var friction, k_b, k_u;
+      k_u = 0.1;
+      k_b = 0.1;
+      friction = 0.1;
+      this.a = -this.y * k_u - this.v * friction;
+      if (this.prev) {
+        this.a -= (this.y - this.prev.y) * k_b;
+      }
+      if (this.next) {
+        this.a -= (this.y - this.next.y) * k_b;
+      }
       this.v += this.a;
       return this.y += this.v;
     };
@@ -24,8 +38,8 @@
 
   Wave = (function() {
     function Wave(canvas, ctx) {
-      var i, wave_len;
-      wave_len = 30;
+      var i, j, next, prev, ref, wave_len;
+      wave_len = 15;
       this.array = (function() {
         var j, ref, results;
         results = [];
@@ -34,6 +48,16 @@
         }
         return results;
       })();
+      for (i = j = 0, ref = this.array.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        prev = next = null;
+        if (i !== 0) {
+          prev = this.array[i - 1];
+        }
+        if (i !== this.array.length - 1) {
+          next = this.array[i + 1];
+        }
+        this.array[i].connect(prev, next);
+      }
       this.canvas = canvas;
       this.ctx = ctx;
     }
@@ -53,6 +77,7 @@
       var defalult_y, i, j, ref, x, y;
       this.ctx.lineWidth = 2;
       this.ctx.strokeStyle = "#FF0000";
+      this.ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
       defalult_y = this.canvas.height * 0.3;
       this.ctx.beginPath();
       for (i = j = 0, ref = this.array.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
@@ -64,11 +89,14 @@
           this.ctx.lineTo(x, y);
         }
       }
-      return this.ctx.stroke();
+      this.ctx.lineTo(this.canvas.width, this.canvas.height);
+      this.ctx.lineTo(0, this.canvas.height);
+      this.ctx.closePath();
+      return this.ctx.fill();
     };
 
-    Wave.prototype.givePulse = function() {
-      return this.array[this.array.length / 2].v = 10;
+    Wave.prototype.givePulse = function(i, v) {
+      return this.array[i].v = v;
     };
 
     return Wave;
@@ -99,9 +127,9 @@
 
     Main.prototype.update = function() {
       this.wave.update();
-      if (this.counter % 10 === 0) {
+      if (this.counter === 0) {
         console.log('pulse');
-        this.wave.givePulse();
+        this.wave.givePulse(Math.floor(this.wave.array.length / 2), 10);
       }
       return this.counter += 1;
     };
