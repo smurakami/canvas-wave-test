@@ -122,7 +122,7 @@
 
     Wave.prototype.giveAccel = function(accel) {
       var a;
-      a = 3;
+      a = 8;
       if (accel.x > 0) {
         return this.givePulse(0, a * accel.x);
       } else {
@@ -153,7 +153,7 @@
       this.x = Math.random();
       this.y = 0;
       this.vx = (Math.random() - 0.5) * 0.01;
-      this.vy = 0.001;
+      this.vy = 0.001 * (1 + Math.random());
       this.size = 10 + Math.random() * 5;
       r = Math.floor(Math.random() * 100 + 155);
       g = Math.floor(Math.random() * 100 + 155);

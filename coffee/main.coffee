@@ -73,7 +73,7 @@ class Wave
     @ctx.restore()
 
   giveAccel: (accel) ->
-    a = 3
+    a = 8
     if accel.x > 0
       @givePulse( 0, a *  accel.x)
     else
@@ -94,7 +94,7 @@ class BubbleComponent
     @x = Math.random()
     @y = 0
     @vx = (Math.random() - 0.5) * 0.01
-    @vy = 0.001
+    @vy = 0.001 * (1 + Math.random())
     @size = 10 + Math.random() * 5
     r = Math.floor(Math.random() * 100 + 155)
     g = Math.floor(Math.random() * 100 + 155)
