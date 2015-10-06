@@ -43,6 +43,7 @@ class Wave
       @array[i].connect(prev, next)
 
   update: ->
+    @giveAccel(SharedInfo.accel)
     @array.map (c) -> c.update()
 
   draw: ->
@@ -115,7 +116,6 @@ class Bubble
 class Main
   constructor: ->
     @initCanvas()
-    @accel   = {x: 0, y: 0, z: 0}
     @wave = new Wave(@canvas, @ctx)
     @bubble = new Bubble(@canvas, @ctx)
     @counter = 0
@@ -128,7 +128,6 @@ class Main
     @ctx = ctx
 
   update: ->
-    @wave.giveAccel(@accel)
     @wave.update()
     @bubble.update()
     @counter += 1
@@ -138,12 +137,12 @@ class Main
     @wave.draw()
 
   devicemotionHandler: (event) ->
-    @accel.x = event.acceleration.x
-    @accel.y = event.acceleration.y
-    @accel.z = event.acceleration.z
-    SharedInfo.gravity.x = event.accelerationIncludingGravity.x - @accel.x
-    SharedInfo.gravity.y = event.accelerationIncludingGravity.y - @accel.y
-    SharedInfo.gravity.z = event.accelerationIncludingGravity.z - @accel.z
+    SharedInfo.accel.x = event.acceleration.x
+    SharedInfo.accel.y = event.acceleration.y
+    SharedInfo.accel.z = event.acceleration.z
+    SharedInfo.gravity.x = event.accelerationIncludingGravity.x - SharedInfo.accel.x
+    SharedInfo.gravity.y = event.accelerationIncludingGravity.y - SharedInfo.accel.y
+    SharedInfo.gravity.z = event.accelerationIncludingGravity.z - SharedInfo.accel.z
     SharedInfo.gravity.y -= Math.abs(SharedInfo.gravity.z)
 
   drawAccel: ->

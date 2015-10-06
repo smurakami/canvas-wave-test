@@ -84,6 +84,7 @@
     };
 
     Wave.prototype.update = function() {
+      this.giveAccel(SharedInfo.accel);
       return this.array.map(function(c) {
         return c.update();
       });
@@ -205,11 +206,6 @@
   Main = (function() {
     function Main() {
       this.initCanvas();
-      this.accel = {
-        x: 0,
-        y: 0,
-        z: 0
-      };
       this.wave = new Wave(this.canvas, this.ctx);
       this.bubble = new Bubble(this.canvas, this.ctx);
       this.counter = 0;
@@ -226,7 +222,6 @@
     };
 
     Main.prototype.update = function() {
-      this.wave.giveAccel(this.accel);
       this.wave.update();
       this.bubble.update();
       return this.counter += 1;
@@ -238,12 +233,12 @@
     };
 
     Main.prototype.devicemotionHandler = function(event) {
-      this.accel.x = event.acceleration.x;
-      this.accel.y = event.acceleration.y;
-      this.accel.z = event.acceleration.z;
-      SharedInfo.gravity.x = event.accelerationIncludingGravity.x - this.accel.x;
-      SharedInfo.gravity.y = event.accelerationIncludingGravity.y - this.accel.y;
-      SharedInfo.gravity.z = event.accelerationIncludingGravity.z - this.accel.z;
+      SharedInfo.accel.x = event.acceleration.x;
+      SharedInfo.accel.y = event.acceleration.y;
+      SharedInfo.accel.z = event.acceleration.z;
+      SharedInfo.gravity.x = event.accelerationIncludingGravity.x - SharedInfo.accel.x;
+      SharedInfo.gravity.y = event.accelerationIncludingGravity.y - SharedInfo.accel.y;
+      SharedInfo.gravity.z = event.accelerationIncludingGravity.z - SharedInfo.accel.z;
       return SharedInfo.gravity.y -= Math.abs(SharedInfo.gravity.z);
     };
 
