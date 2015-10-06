@@ -1,3 +1,8 @@
+SharedInfo =
+  gravity: {x: 0, y: -10, z: 0}
+  accel: {x: 0, y: 0, z: 0}
+  wave_height: 0.6
+
 class WaveComponent
   constructor: ->
     @y = 0
@@ -11,7 +16,7 @@ class WaveComponent
   update: ->
     k_u = 1.0
     k_b = 0.1
-    friction = 0.1
+    friction = 0.12
     @a = - @y * k_u - @v * friction
     if @prev
       @a -= (@y - @prev.y) * k_b
@@ -25,7 +30,6 @@ class Wave
     wave_len = 7
     @array = (new WaveComponent for i in [0...wave_len])
     @connectWaveComponents()
-    @gravity = {x: 12, y: 30}
     @canvas = canvas
     @ctx = ctx
 
@@ -39,20 +43,20 @@ class Wave
       @array[i].connect(prev, next)
 
   update: ->
-    for c in @array
-      c.update()
+    @array.map (c) -> c.update()
 
   draw: ->
+    gravity = SharedInfo.gravity
     @ctx.lineWidth = 2
     @ctx.strokeStyle = "#FF0000"
     @ctx.fillStyle = "rgba(255, 0, 0, 0.5)"
-    defalult_y = @canvas.height * 0.4
+    defalult_y = @canvas.height * (1 - SharedInfo.wave_height)
     size = Math.sqrt(Math.pow(@canvas.width, 2) + Math.pow(@canvas.height, 2))
     margin = (size - @canvas.width)/2
     @ctx.beginPath()
     @ctx.save()
     @ctx.translate(@canvas.width/2, @canvas.height/2)
-    @ctx.rotate(Math.atan2(-@gravity.x, -@gravity.y))
+    @ctx.rotate(Math.atan2(-gravity.x, -gravity.y))
     @ctx.translate(-@canvas.width/2, -@canvas.height/2)
     for i in [0...@array.length]
       x = size / (@array.length - 1) * i - margin
@@ -80,12 +84,40 @@ class Wave
     @array[i].v = v
 
 
+class BubbleComponent
+  constructor: ->
+    @initPos()
+  initPos: ->
+    @x = Math.random()
+    @vx = Math.random() * 0.1
+    @y = 0
+    @vy = 0
+  update: ->
+    @x += @vx
+    @y += @vy
+    @vy += 0.01
+    if @x > 1
+      @initPos
+
+class Bubble
+  constructor: (canvas, ctx) ->
+    @canvas = canvas
+    @ctx = ctx
+    bubble_num = 20
+    @array = (new BubbleComponent for i in [0...20])
+  update: ->
+    @array.map (c) -> c.update()
+  draw: ->
+    for i in @array.length
+      x = @array[i].x * (@canvas)
+
+
 class Main
   constructor: ->
     @initCanvas()
     @accel   = {x: 0, y: 0, z: 0}
-    @gravity = {x: 0, y: -10, z: 0}
     @wave = new Wave(@canvas, @ctx)
+    @bubble = new Bubble(@canvas, @ctx)
     @counter = 0
   initCanvas: ->
     c = document.getElementById("main_canvas");
@@ -96,10 +128,11 @@ class Main
     @ctx = ctx
 
   update: ->
-    @wave.gravity = @gravity
     @wave.giveAccel(@accel)
     @wave.update()
+    @bubble.update()
     @counter += 1
+
   draw: ->
     @ctx.clearRect(0, 0, @canvas.width, @canvas.height)
     @wave.draw()
@@ -108,10 +141,10 @@ class Main
     @accel.x = event.acceleration.x
     @accel.y = event.acceleration.y
     @accel.z = event.acceleration.z
-    @gravity.x = event.accelerationIncludingGravity.x - @accel.x
-    @gravity.y = event.accelerationIncludingGravity.y - @accel.y
-    @gravity.z = event.accelerationIncludingGravity.z - @accel.z
-    @gravity.y -= Math.abs(@gravity.z)
+    SharedInfo.gravity.x = event.accelerationIncludingGravity.x - @accel.x
+    SharedInfo.gravity.y = event.accelerationIncludingGravity.y - @accel.y
+    SharedInfo.gravity.z = event.accelerationIncludingGravity.z - @accel.z
+    SharedInfo.gravity.y -= Math.abs(SharedInfo.gravity.z)
 
   drawAccel: ->
     ctx = @ctx
@@ -153,14 +186,3 @@ $ ->
     app.update()
     app.draw()
   , 33
-
-
-getSign = (n) ->
-  if n >= 0
-    "+"
-  else
-    "-"
-
-
-  num = Math.floor( Math.abs(n) * 100) / 100
-  num.toString()
