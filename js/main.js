@@ -65,6 +65,7 @@
       this.connectWaveComponents();
       this.canvas = canvas;
       this.ctx = ctx;
+      this.fillStyle = "#2980b9";
     }
 
     Wave.prototype.connectWaveComponents = function() {
@@ -94,8 +95,7 @@
       var defalult_y, gravity, i, j, margin, ref, size, x, y;
       gravity = SharedInfo.gravity;
       this.ctx.lineWidth = 2;
-      this.ctx.strokeStyle = "#FF0000";
-      this.ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+      this.ctx.fillStyle = this.fillStyle;
       defalult_y = this.canvas.height * (1 - SharedInfo.wave_height);
       size = Math.sqrt(Math.pow(this.canvas.width, 2) + Math.pow(this.canvas.height, 2));
       margin = (size - this.canvas.width) / 2;
@@ -143,22 +143,37 @@
 
   BubbleComponent = (function() {
     function BubbleComponent() {
-      this.initPos();
+      this.init();
+      this.hidden = true;
+      this.y = Math.random();
     }
 
-    BubbleComponent.prototype.initPos = function() {
+    BubbleComponent.prototype.init = function() {
+      var b, g, r;
       this.x = Math.random();
-      this.vx = Math.random() * 0.1;
       this.y = 0;
-      return this.vy = 0;
+      this.vx = (Math.random() - 0.5) * 0.01;
+      this.vy = 0.001;
+      this.size = 10 + Math.random() * 5;
+      r = Math.floor(Math.random() * 100 + 155);
+      g = Math.floor(Math.random() * 100 + 155);
+      b = Math.floor(Math.random() * 100 + 155);
+      return this.fillStyle = "rgba(" + r + ", " + g + ", " + b + ", 1.0)";
     };
 
     BubbleComponent.prototype.update = function() {
       this.x += this.vx;
       this.y += this.vy;
-      this.vy += 0.01;
+      this.vy += 0.001;
       if (this.x > 1) {
-        return this.initPos;
+        this.x = 0;
+      }
+      if (this.x < 0) {
+        this.x = 1;
+      }
+      if (this.y > 1) {
+        this.init();
+        return this.hidden = false;
       }
     };
 
@@ -171,7 +186,7 @@
       var bubble_num, i;
       this.canvas = canvas;
       this.ctx = ctx;
-      bubble_num = 20;
+      bubble_num = 40;
       this.array = (function() {
         var j, results;
         results = [];
@@ -189,14 +204,26 @@
     };
 
     Bubble.prototype.draw = function() {
-      var i, j, len, ref, results, x;
-      ref = this.array.length;
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        i = ref[j];
-        results.push(x = this.array[i].x * this.canvas);
+      var c, i, j, margin, ref, size, x, y;
+      size = Math.sqrt(Math.pow(this.canvas.width, 2) + Math.pow(this.canvas.height, 2));
+      margin = (size - this.canvas.width) / 2;
+      this.ctx.save();
+      this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+      this.ctx.rotate(Math.atan2(-SharedInfo.gravity.x, -SharedInfo.gravity.y));
+      this.ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2);
+      for (i = j = 0, ref = this.array.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        if (this.array[i].hidden) {
+          continue;
+        }
+        c = this.array[i];
+        this.ctx.fillStyle = c.fillStyle;
+        x = c.x * size - margin;
+        y = this.canvas.height * (1 - SharedInfo.wave_height * c.y);
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, c.size, 0, 2 * Math.PI, false);
+        this.ctx.fill();
       }
-      return results;
+      return this.ctx.restore();
     };
 
     return Bubble;
@@ -229,7 +256,8 @@
 
     Main.prototype.draw = function() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      return this.wave.draw();
+      this.wave.draw();
+      return this.bubble.draw();
     };
 
     Main.prototype.devicemotionHandler = function(event) {

@@ -32,6 +32,7 @@ class Wave
     @connectWaveComponents()
     @canvas = canvas
     @ctx = ctx
+    @fillStyle = "#2980b9"
 
   connectWaveComponents: ->
     for i in [0...@array.length]
@@ -49,8 +50,7 @@ class Wave
   draw: ->
     gravity = SharedInfo.gravity
     @ctx.lineWidth = 2
-    @ctx.strokeStyle = "#FF0000"
-    @ctx.fillStyle = "rgba(255, 0, 0, 0.5)"
+    @ctx.fillStyle = @fillStyle
     defalult_y = @canvas.height * (1 - SharedInfo.wave_height)
     size = Math.sqrt(Math.pow(@canvas.width, 2) + Math.pow(@canvas.height, 2))
     margin = (size - @canvas.width)/2
@@ -87,30 +87,58 @@ class Wave
 
 class BubbleComponent
   constructor: ->
-    @initPos()
-  initPos: ->
+    @init()
+    @hidden = true
+    @y = Math.random()
+  init: ->
     @x = Math.random()
-    @vx = Math.random() * 0.1
     @y = 0
-    @vy = 0
+    @vx = (Math.random() - 0.5) * 0.01
+    @vy = 0.001
+    @size = 10 + Math.random() * 5
+    r = Math.floor(Math.random() * 100 + 155)
+    g = Math.floor(Math.random() * 100 + 155)
+    b = Math.floor(Math.random() * 100 + 155)
+    @fillStyle = "rgba(#{r}, #{g}, #{b}, 1.0)"
   update: ->
     @x += @vx
     @y += @vy
-    @vy += 0.01
+    @vy += 0.001
     if @x > 1
-      @initPos
+      @x = 0
+    if @x < 0
+      @x = 1
+    if @y > 1
+      @init()
+      @hidden = false
 
 class Bubble
   constructor: (canvas, ctx) ->
     @canvas = canvas
     @ctx = ctx
-    bubble_num = 20
+    bubble_num = 40
     @array = (new BubbleComponent for i in [0...20])
   update: ->
     @array.map (c) -> c.update()
   draw: ->
-    for i in @array.length
-      x = @array[i].x * (@canvas)
+    size = Math.sqrt(Math.pow(@canvas.width, 2) + Math.pow(@canvas.height, 2))
+    margin = (size - @canvas.width)/2
+    @ctx.save()
+    @ctx.translate(@canvas.width/2, @canvas.height/2)
+    @ctx.rotate(Math.atan2(-SharedInfo.gravity.x, -SharedInfo.gravity.y))
+    @ctx.translate(-@canvas.width/2, -@canvas.height/2)
+    for i in [0...@array.length]
+      if @array[i].hidden
+        continue
+      c = @array[i]
+      @ctx.fillStyle = c.fillStyle
+      x = c.x * size - margin
+      y = @canvas.height * (1 - SharedInfo.wave_height * c.y)
+      @ctx.beginPath()
+      @ctx.arc(x, y,
+        c.size, 0, 2 * Math.PI, false)
+      @ctx.fill()
+    @ctx.restore()
 
 
 class Main
@@ -135,6 +163,7 @@ class Main
   draw: ->
     @ctx.clearRect(0, 0, @canvas.width, @canvas.height)
     @wave.draw()
+    @bubble.draw()
 
   devicemotionHandler: (event) ->
     SharedInfo.accel.x = event.acceleration.x
