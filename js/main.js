@@ -92,7 +92,7 @@
     };
 
     Wave.prototype.draw = function() {
-      var defalult_y, gravity, i, j, margin, ref, size, x, y;
+      var c, cp1_x, cp1_y, cp2_x, cp2_y, cp_len, defalult_y, delta_x, gravity, i, j, k, len, margin, next_y, prev_y, ref, ref1, size, theta_array, x, y;
       gravity = SharedInfo.gravity;
       this.ctx.lineWidth = 2;
       this.ctx.fillStyle = this.fillStyle;
@@ -104,13 +104,33 @@
       this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
       this.ctx.rotate(Math.atan2(-gravity.x, -gravity.y));
       this.ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2);
-      for (i = j = 0, ref = this.array.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-        x = size / (this.array.length - 1) * i - margin;
+      delta_x = size / (this.array.length - 1);
+      theta_array = [];
+      ref = this.array;
+      for (j = 0, len = ref.length; j < len; j++) {
+        c = ref[j];
+        prev_y = next_y = c.y;
+        if (c.prev) {
+          prev_y = c.prev.y;
+        }
+        if (c.next) {
+          next_y = c.next.y;
+        }
+        theta_array.push(Math.atan2(next_y - prev_y, delta_x));
+      }
+      cp_len = delta_x * 0.5;
+      for (i = k = 0, ref1 = this.array.length; 0 <= ref1 ? k < ref1 : k > ref1; i = 0 <= ref1 ? ++k : --k) {
+        c = this.array[i];
+        x = delta_x * i - margin;
         y = this.array[i].y + defalult_y;
-        if (x === 0) {
+        if (i === 0) {
           this.ctx.moveTo(x, y);
         } else {
-          this.ctx.lineTo(x, y);
+          cp1_x = x - delta_x + Math.cos(theta_array[i - 1]) * cp_len;
+          cp1_y = c.prev.y + defalult_y + Math.sin(theta_array[i - 1]) * cp_len;
+          cp2_x = x - Math.cos(theta_array[i]) * cp_len;
+          cp2_y = y - Math.sin(theta_array[i]) * cp_len;
+          this.ctx.bezierCurveTo(cp1_x, cp1_y, cp2_x, cp2_y, x, y);
         }
       }
       this.ctx.lineTo(this.canvas.width + margin, this.canvas.height + margin);

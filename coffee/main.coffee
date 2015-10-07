@@ -59,13 +59,30 @@ class Wave
     @ctx.translate(@canvas.width/2, @canvas.height/2)
     @ctx.rotate(Math.atan2(-gravity.x, -gravity.y))
     @ctx.translate(-@canvas.width/2, -@canvas.height/2)
+    delta_x = size / (@array.length - 1)
+    theta_array = []
+    for c in @array
+      prev_y = next_y = c.y
+      if c.prev
+        prev_y = c.prev.y
+      if c.next
+        next_y = c.next.y
+      theta_array.push (Math.atan2(next_y - prev_y, delta_x))
+    cp_len = delta_x * 0.5
+
     for i in [0...@array.length]
-      x = size / (@array.length - 1) * i - margin
+      c = @array[i]
+      x = delta_x * i - margin
       y = @array[i].y + defalult_y
-      if x == 0
+      if i == 0
         @ctx.moveTo(x, y)
       else
-        @ctx.lineTo(x, y)
+        cp1_x = x - delta_x + Math.cos(theta_array[i-1]) * cp_len
+        cp1_y = c.prev.y + defalult_y + Math.sin(theta_array[i-1]) * cp_len
+        cp2_x = x - Math.cos(theta_array[i]) * cp_len
+        cp2_y = y - Math.sin(theta_array[i]) * cp_len
+
+        @ctx.bezierCurveTo(cp1_x, cp1_y, cp2_x, cp2_y, x, y)
     @ctx.lineTo(@canvas.width + margin, @canvas.height + margin)
     @ctx.lineTo(-margin, @canvas.height + margin)
     @ctx.closePath()
